@@ -1,4 +1,3 @@
-// src/contexts/RangeContext.jsx
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { positionOptions, rangesByPosition } from '../data/ranges';
 import { expandAllRanges } from '../utils/rangeParser';
@@ -6,36 +5,30 @@ import { expandAllRanges } from '../utils/rangeParser';
 const RangeContext = createContext();
 
 export function RangeProvider({ children }) {
-  // 1) Expand all built-in defaults
   const full = useMemo(() => {
-  const expanded = expandAllRanges(rangesByPosition);
-  console.log('FULL RANGES LOADED:', expanded); // ← add this
-  return expanded;
-}, []);
+    const expanded = expandAllRanges(rangesByPosition);
+    return expanded;
+  }, []);
 
-  // 2) Initialize merged ranges from localStorage and defaults
   const [ranges, setRanges] = useState(() => {
     const saved = JSON.parse(localStorage.getItem('customRanges') || '{}');
     const merged = {};
 
-    // Merge default ranges with saved ranges
     Object.keys(full).forEach(pos => {
       const defaultCombos = Array.isArray(full[pos]) ? full[pos] : [];
       const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
       merged[pos] = new Set([...defaultCombos, ...savedCombos]);
     });
 
-    // Include any fully custom named ranges
     Object.keys(saved).forEach(name => {
       if (!merged[name]) {
         merged[name] = new Set(saved[name]);
       }
     });
-	console.log('FINAL MERGED RANGES:', merged);
+
     return merged;
   });
 
-  // 3) Save to localStorage when ranges change
   useEffect(() => {
     const toSave = Object.fromEntries(
       Object.entries(ranges).map(([name, comboSet]) => [name, Array.from(comboSet)])
@@ -43,7 +36,6 @@ export function RangeProvider({ children }) {
     localStorage.setItem('customRanges', JSON.stringify(toSave));
   }, [ranges]);
 
-  // 4) Helpers
   const updateRange = (name, comboSet) => {
     setRanges(prev => ({
       ...prev,
@@ -68,7 +60,17 @@ export function RangeProvider({ children }) {
 
   return (
     <RangeContext.Provider value={{ positionOptions, full, ranges, updateRange, createRange, deleteRange }}>
-      {children}
+      <>
+        {children}
+
+        {/* TEMPORARY DEBUG UI FOR DEPLOYED VERSION */}
+        <div style={{ padding: '1em', backgroundColor: '#fefce8', color: '#92400e', fontSize: '0.75rem' }}>
+          <strong>DEBUG:</strong><br />
+          UTG Range Size: {Array.from(ranges.UTG || []).length} combos<br />
+          CO Range Size: {Array.from(ranges.CO || []).length} combos<br />
+          BTN Range Size: {Array.from(ranges.BTN || []).length} combos<br />
+        </div>
+      </>
     </RangeContext.Provider>
   );
 }
