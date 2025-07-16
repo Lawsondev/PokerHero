@@ -3,15 +3,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRanges } from '../contexts/RangeContext';
 import TableDisplay from '../components/TableDisplay';
 import RangeHeatmap from '../components/RangeHeatmap';
-import { positionOptions, rangesByPosition } from '../data/ranges';
-import { expandAllRanges } from '../utils/rangeParser';
+import { positionOptions } from '../data/ranges';
 import { dealCombo } from '../utils/rangeUtils';
 
 export default function RangeTrainer() {
-  // ——— Grab the user’s saved ranges from context ———
   const { full: fullRanges, ranges } = useRanges();
 
-  // Build full 13×13 combo list once
   const ALL_COMBOS = useMemo(() => {
     const R = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
     const combos = [];
@@ -25,40 +22,35 @@ export default function RangeTrainer() {
     return combos;
   }, []);
 
-  // Scenario state
-  const [players,      setPlayers]      = useState(6);
-  const [scenario,     setScenario]     = useState(null);
+  const [players, setPlayers] = useState(6);
+  const [scenario, setScenario] = useState(null);
   const [stackedSeats, setStackedSeats] = useState([]);
-  const [feedback,     setFeedback]     = useState('');
-  const [loading,      setLoading]      = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [answered, setAnswered] = useState(false);
 
-  // Generate a new random scenario
   const generateScenario = () => {
-    const newPlayers      = Math.floor(Math.random() * 5) + 2; 
+    const newPlayers = Math.floor(Math.random() * 5) + 2;
     const activePositions = positionOptions.slice(0, newPlayers);
-    const heroPos         = activePositions[Math.floor(Math.random() * newPlayers)];
-    const buttonPos       = 'BTN';
+    const heroPos = activePositions[Math.floor(Math.random() * newPlayers)];
+    const buttonPos = 'BTN';
 
-    // Pick any combo from the full 13×13 grid
     const combo = ALL_COMBOS[Math.floor(Math.random() * ALL_COMBOS.length)];
     const [c1, c2] = dealCombo(combo);
 
-    // Decide correct action from the **context** range for heroPos
     const heroSet = ranges[heroPos] || new Set(fullRanges[heroPos]);
     const correctResponse = heroSet.has(combo) ? 'raise' : 'fold';
 
     return {
-      players:        newPlayers,
+      players: newPlayers,
       activePositions,
-      heroPosition:   heroPos,
+      heroPosition: heroPos,
       buttonPosition: buttonPos,
-      heroCards:      [c1, c2],
+      heroCards: [c1, c2],
       combo,
       correctResponse,
     };
   };
 
-  // On mount: seed first scenario
   useEffect(() => {
     const first = generateScenario();
     setScenario(first);
@@ -66,20 +58,17 @@ export default function RangeTrainer() {
     setStackedSeats(first.activePositions.filter(p => p !== first.heroPosition));
   }, []);
 
-  // Next Hand
   const handleNextHand = () => {
-    setLoading(false);
     setFeedback('');
+    setAnswered(false);
     const next = generateScenario();
     setScenario(next);
     setPlayers(next.players);
     setStackedSeats(next.activePositions.filter(p => p !== next.heroPosition));
   };
 
-  // Handle Answer
   const handleAnswer = (action) => {
-    if (!scenario) return;
-    setLoading(true);
+    if (!scenario || answered) return;
     const correct = action === scenario.correctResponse;
     setFeedback(
       correct
@@ -93,10 +82,9 @@ export default function RangeTrainer() {
           : [...prev, scenario.heroPosition]
       );
     }
-    // now wait for Next Hand…
+    setAnswered(true);
   };
 
-  // Lookup the hero’s context‐saved Set once
   const heroSet = scenario
     ? ranges[scenario.heroPosition] || new Set(fullRanges[scenario.heroPosition])
     : new Set();
@@ -124,7 +112,7 @@ export default function RangeTrainer() {
             className="mt-1 p-2 border rounded"
             value={players}
             onChange={e => setPlayers(Number(e.target.value))}
-            disabled={loading}
+            disabled={answered} 
           >
             {[2,3,4,5,6].map(n => (
               <option key={n} value={n}>{n}</option>
@@ -134,13 +122,12 @@ export default function RangeTrainer() {
         <button
           className="ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           onClick={handleNextHand}
-          disabled={loading}
+          disabled={false} 
         >
           Next Hand
         </button>
       </div>
 
-      {/* Table Display */}
       {scenario && (
         <TableDisplay
           activePositions={scenario.activePositions}
@@ -158,7 +145,7 @@ export default function RangeTrainer() {
             key={action}
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => handleAnswer(action)}
-            disabled={loading}
+            disabled={answered}
           >
             {action.charAt(0).toUpperCase() + action.slice(1)}
           </button>
@@ -170,7 +157,7 @@ export default function RangeTrainer() {
         <div className="mt-4 text-lg font-medium">{feedback}</div>
       )}
 
-      {/* DEBUG PANEL */}
+      {/* Debug info */}
       {scenario && (
         <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
           <strong>DEBUG:</strong>
@@ -182,7 +169,7 @@ export default function RangeTrainer() {
         </div>
       )}
 
-      {/* Show range & highlight dealt combo */}
+      {/* Range Chart */}
       {feedback && scenario && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2">Your Range</h2>
