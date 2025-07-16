@@ -12,7 +12,7 @@ const allCombos = useMemo(() => {
     const u = new Set(Object.values(full).flat());
     return Array.from(u);
   }, [full]);
-
+console.log('Loaded full defaults:', Object.entries(full).map(([k, v]) => [k, v?.length]));
   // Build a list of all named ranges, with defaults first
   const rangeNames = useMemo(() => {
     const allNames = Object.keys(ranges);
@@ -32,7 +32,7 @@ const allCombos = useMemo(() => {
       setSelectedName(rangeNames[0]);
     }
   }, [rangeNames, selectedName]);
-
+console.log('Selected:', selectedName, '→ Set size:', ranges[selectedName]?.size || 0);
   const currentSet = ranges[selectedName] || new Set();
   const count = currentSet.size;
 
@@ -49,10 +49,11 @@ const allCombos = useMemo(() => {
   };
 
   // Reset back to the default for this range
-  const handleReset = () => {
-    const defaults = full[selectedName] || [];
-    updateRange(selectedName, new Set(defaults));
-  };
+const handleReset = () => {
+  const defaults = Array.isArray(full[selectedName]) ? full[selectedName] : [];
+  console.log('Resetting to default for', selectedName, '→', defaults.length, 'combos');
+  updateRange(selectedName, new Set(defaults));
+};
 
   // Create a new custom range
   const handleCreate = () => {
