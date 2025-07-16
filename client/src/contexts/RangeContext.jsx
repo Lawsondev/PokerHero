@@ -6,56 +6,54 @@ import { expandAllRanges } from '../utils/rangeParser';
 const RangeContext = createContext();
 
 export function RangeProvider({ children }) {
-  // 1) Expand all the built-in shorthand defaults
+  // 1) Expand all built-in defaults
   const full = useMemo(() => expandAllRanges(rangesByPosition), []);
 
-  // 2) Initialize from localStorage + defaults
+  // 2) Initialize merged ranges from localStorage and defaults
   const [ranges, setRanges] = useState(() => {
     const saved = JSON.parse(localStorage.getItem('customRanges') || '{}');
-    const init = {};
+    const merged = {};
 
-    // a) load each default position
-    positionOptions.forEach(pos => {
-      const def = Array.isArray(full[pos]) ? full[pos] : [];
-      const cust = Array.isArray(saved[pos]) ? saved[pos] : def;
-      init[pos] = new Set(cust);
+    // Merge default ranges with saved ranges
+    Object.keys(full).forEach(pos => {
+      const defaultCombos = Array.isArray(full[pos]) ? full[pos] : [];
+      const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
+      merged[pos] = new Set([...defaultCombos, ...savedCombos]);
     });
 
-    // b) load any extra saved keys (custom ranges)
+    // Include any fully custom named ranges
     Object.keys(saved).forEach(name => {
-      if (!positionOptions.includes(name)) {
-        const arr = Array.isArray(saved[name]) ? saved[name] : [];
-        init[name] = new Set(arr);
+      if (!merged[name]) {
+        merged[name] = new Set(saved[name]);
       }
     });
 
-    return init;
+    return merged;
   });
 
-  // 3) Persist whenever `ranges` changes
+  // 3) Save to localStorage when ranges change
   useEffect(() => {
     const toSave = Object.fromEntries(
-      Object.entries(ranges).map(([name, comboSet]) => [
-        name,
-        Array.from(comboSet),
-      ])
+      Object.entries(ranges).map(([name, comboSet]) => [name, Array.from(comboSet)])
     );
     localStorage.setItem('customRanges', JSON.stringify(toSave));
   }, [ranges]);
 
-  // 4) Updaters
+  // 4) Helpers
   const updateRange = (name, comboSet) => {
     setRanges(prev => ({
       ...prev,
       [name]: new Set(comboSet),
     }));
   };
+
   const createRange = (name, comboSet) => {
     setRanges(prev => ({
       ...prev,
       [name]: new Set(comboSet),
     }));
   };
+
   const deleteRange = (name) => {
     setRanges(prev => {
       const next = { ...prev };
