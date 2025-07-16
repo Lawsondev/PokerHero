@@ -7,7 +7,11 @@ const RangeContext = createContext();
 
 export function RangeProvider({ children }) {
   // 1) Expand all built-in defaults
-  const full = useMemo(() => expandAllRanges(rangesByPosition), []);
+  const full = useMemo(() => {
+  const expanded = expandAllRanges(rangesByPosition);
+  console.log('FULL RANGES LOADED:', expanded); // ← add this
+  return expanded;
+}, []);
 
   // 2) Initialize merged ranges from localStorage and defaults
   const [ranges, setRanges] = useState(() => {
@@ -27,7 +31,7 @@ export function RangeProvider({ children }) {
         merged[name] = new Set(saved[name]);
       }
     });
-
+	console.log('FINAL MERGED RANGES:', merged);
     return merged;
   });
 
