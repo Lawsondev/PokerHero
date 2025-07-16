@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { positionOptions, rangesByPosition } from '../data/ranges';
 import { expandAllRanges } from '../utils/rangeParser';
-
+console.log('IMPORTED rangesByPosition:', rangesByPosition);
 const RangeContext = createContext();
 
 export function RangeProvider({ children }) {
