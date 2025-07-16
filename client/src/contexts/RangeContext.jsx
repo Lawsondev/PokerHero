@@ -10,24 +10,29 @@ export function RangeProvider({ children }) {
     return expanded;
   }, []);
 
-  const [ranges, setRanges] = useState(() => {
-    const saved = JSON.parse(localStorage.getItem('customRanges') || '{}');
-    const merged = {};
+const [ranges, setRanges] = useState(() => {
+  const saved = JSON.parse(localStorage.getItem('customRanges') || '{}');
+  const merged = {};
 
-    Object.keys(full).forEach(pos => {
-      const defaultCombos = Array.isArray(full[pos]) ? full[pos] : [];
-      const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
-      merged[pos] = new Set([...defaultCombos, ...savedCombos]);
-    });
+  positionOptions.forEach(pos => {
+    const defaultShorthand = Array.isArray(rangesByPosition[pos]) ? rangesByPosition[pos] : [];
+    const expandedMap = expandAllRanges({ [pos]: defaultShorthand });
+    const defaultExpanded = Array.isArray(expandedMap[pos]) ? expandedMap[pos] : [];
 
-    Object.keys(saved).forEach(name => {
-      if (!merged[name]) {
-        merged[name] = new Set(saved[name]);
-      }
-    });
+    const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
 
-    return merged;
+    merged[pos] = new Set([...defaultExpanded, ...savedCombos]);
   });
+
+  // Include any fully custom saved ranges
+  Object.keys(saved).forEach(name => {
+    if (!merged[name]) {
+      merged[name] = new Set(Array.isArray(saved[name]) ? saved[name] : []);
+    }
+  });
+
+  return merged;
+});
 
   useEffect(() => {
     const toSave = Object.fromEntries(
