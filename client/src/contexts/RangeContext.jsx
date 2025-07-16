@@ -1,46 +1,54 @@
+// src/contexts/RangeContext.jsx
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { positionOptions, rangesByPosition } from '../data/ranges';
 import { expandAllRanges } from '../utils/rangeParser';
-console.log('IMPORTED rangesByPosition:', rangesByPosition);
+
 const RangeContext = createContext();
 
 export function RangeProvider({ children }) {
   const full = useMemo(() => {
     const expanded = expandAllRanges(rangesByPosition);
+    console.log('Full defaults loaded:', expanded);
     return expanded;
   }, []);
 
-const [ranges, setRanges] = useState(() => {
-  const saved = JSON.parse(localStorage.getItem('customRanges') || '{}');
-  const merged = {};
+  const [ranges, setRanges] = useState(null); // ← start as null
 
-  positionOptions.forEach(pos => {
-    const defaultShorthand = Array.isArray(rangesByPosition[pos]) ? rangesByPosition[pos] : [];
-    const expandedMap = expandAllRanges({ [pos]: defaultShorthand });
-    const defaultExpanded = Array.isArray(expandedMap[pos]) ? expandedMap[pos] : [];
-
-    const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
-
-    merged[pos] = new Set([...defaultExpanded, ...savedCombos]);
-  });
-
-  // Include any fully custom saved ranges
-  Object.keys(saved).forEach(name => {
-    if (!merged[name]) {
-      merged[name] = new Set(Array.isArray(saved[name]) ? saved[name] : []);
-    }
-  });
-
-  return merged;
-});
-
+  // Populate ranges after `full` is available
   useEffect(() => {
+    if (!full || Object.keys(full).length === 0) return;
+
+    const saved = JSON.parse(localStorage.getItem('customRanges') || '{}');
+    const merged = {};
+
+    // Merge defaults and saved
+    Object.keys(full).forEach(pos => {
+      const defaults = Array.isArray(full[pos]) ? full[pos] : [];
+      const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
+      merged[pos] = new Set([...defaults, ...savedCombos]);
+    });
+
+    // Custom named ranges
+    Object.keys(saved).forEach(name => {
+      if (!merged[name]) {
+        merged[name] = new Set(saved[name]);
+      }
+    });
+
+    console.log('Merged initial ranges:', merged);
+    setRanges(merged);
+  }, [full]);
+
+  // Save to localStorage when ranges change
+  useEffect(() => {
+    if (!ranges) return;
     const toSave = Object.fromEntries(
-      Object.entries(ranges).map(([name, comboSet]) => [name, Array.from(comboSet)])
+      Object.entries(ranges).map(([name, set]) => [name, Array.from(set)])
     );
     localStorage.setItem('customRanges', JSON.stringify(toSave));
   }, [ranges]);
 
+  // Updaters
   const updateRange = (name, comboSet) => {
     setRanges(prev => ({
       ...prev,
@@ -63,19 +71,14 @@ const [ranges, setRanges] = useState(() => {
     });
   };
 
-  return (
-    <RangeContext.Provider value={{ positionOptions, full, ranges, updateRange, createRange, deleteRange }}>
-      <>
-        {children}
+  // Prevent children from rendering until everything is ready
+  if (!ranges) return null;
 
-        {/* TEMPORARY DEBUG UI FOR DEPLOYED VERSION */}
-        <div style={{ padding: '1em', backgroundColor: '#fefce8', color: '#92400e', fontSize: '0.75rem' }}>
-          <strong>DEBUG:</strong><br />
-          UTG Range Size: {Array.from(ranges.UTG || []).length} combos<br />
-          CO Range Size: {Array.from(ranges.CO || []).length} combos<br />
-          BTN Range Size: {Array.from(ranges.BTN || []).length} combos<br />
-        </div>
-      </>
+  return (
+    <RangeContext.Provider
+      value={{ positionOptions, full, ranges, updateRange, createRange, deleteRange }}
+    >
+      {children}
     </RangeContext.Provider>
   );
 }
