@@ -83,6 +83,9 @@ const handleReset = () => {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Range Settings</h1>
+	  <p className="mb-6 text-gray-700 leading-relaxed">
+        This page is where you set your ranges for each position. These tables are used throughout the app.
+      </p>
 
       {/* Range selector + actions */}
       <div className="mb-4 flex items-center gap-4">

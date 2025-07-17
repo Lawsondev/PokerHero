@@ -92,6 +92,9 @@ export default function RangeTrainer() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Range Memorizer Trainer</h1>
+	  <p className="mb-6 text-gray-700 leading-relaxed">
+        Train your memory by deciding between Folding, Calling, and Raising. The answers are pulled from the range tables set in the Range Settings Tab.
+      </p>
 
       {/* Controls */}
       <div className="flex gap-6 mb-6 items-center">
@@ -157,7 +160,7 @@ export default function RangeTrainer() {
         <div className="mt-4 text-lg font-medium">{feedback}</div>
       )}
 
-      {/* Debug info */}
+      {/* Debug info 
       {scenario && (
         <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
           <strong>DEBUG:</strong>
@@ -168,7 +171,7 @@ export default function RangeTrainer() {
           <p>In Range? {heroSet.has(scenario.combo) ? '✅ yes' : '❌ no'}</p>
         </div>
       )}
-
+	  */}
       {/* Range Chart */}
       {feedback && scenario && (
         <div className="mt-6">
@@ -181,6 +184,7 @@ export default function RangeTrainer() {
           />
         </div>
       )}
+		
     </div>
   );
 }

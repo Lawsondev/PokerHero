@@ -7,7 +7,7 @@ import RangeSettings from './pages/RangeSettings';
 import { RangeProvider } from './contexts/RangeContext';
 export default function App() {
   return (
-    <div className="min-h-screen font-sans text-gray-800">
+    <div className="min-h-screen font-sans bg-[#bef7db] text-gray-800">
       {/* === Navigation Bar === */}
       <nav className="bg-white shadow-md">
         <div className="max-w-screen-lg mx-auto px-4">
