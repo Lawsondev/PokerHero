@@ -1,5 +1,11 @@
 // src/contexts/RangeContext.jsx
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useEffect,
+} from 'react';
 import { positionOptions, rangesByPosition } from '../data/ranges';
 import { expandAllRanges } from '../utils/rangeParser';
 
@@ -22,14 +28,14 @@ export function RangeProvider({ children }) {
     const merged = {};
 
     // Merge defaults and saved
-    Object.keys(full).forEach(pos => {
+    Object.keys(full).forEach((pos) => {
       const defaults = Array.isArray(full[pos]) ? full[pos] : [];
       const savedCombos = Array.isArray(saved[pos]) ? saved[pos] : [];
       merged[pos] = new Set([...defaults, ...savedCombos]);
     });
 
     // Custom named ranges
-    Object.keys(saved).forEach(name => {
+    Object.keys(saved).forEach((name) => {
       if (!merged[name]) {
         merged[name] = new Set(saved[name]);
       }
@@ -50,21 +56,21 @@ export function RangeProvider({ children }) {
 
   // Updaters
   const updateRange = (name, comboSet) => {
-    setRanges(prev => ({
+    setRanges((prev) => ({
       ...prev,
       [name]: new Set(comboSet),
     }));
   };
 
   const createRange = (name, comboSet) => {
-    setRanges(prev => ({
+    setRanges((prev) => ({
       ...prev,
       [name]: new Set(comboSet),
     }));
   };
 
   const deleteRange = (name) => {
-    setRanges(prev => {
+    setRanges((prev) => {
       const next = { ...prev };
       delete next[name];
       return next;
@@ -76,7 +82,14 @@ export function RangeProvider({ children }) {
 
   return (
     <RangeContext.Provider
-      value={{ positionOptions, full, ranges, updateRange, createRange, deleteRange }}
+      value={{
+        positionOptions,
+        full,
+        ranges,
+        updateRange,
+        createRange,
+        deleteRange,
+      }}
     >
       {children}
     </RangeContext.Provider>

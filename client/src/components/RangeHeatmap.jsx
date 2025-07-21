@@ -4,7 +4,21 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 // Descending rank order for grid rows and columns
-const DESC_RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+const DESC_RANKS = [
+  'A',
+  'K',
+  'Q',
+  'J',
+  'T',
+  '9',
+  '8',
+  '7',
+  '6',
+  '5',
+  '4',
+  '3',
+  '2',
+];
 
 /**
  * Interactive RangeHeatmap component: visualizes a 13×13 grid and allows
@@ -26,7 +40,7 @@ export default function RangeHeatmap({
       <thead>
         <tr>
           <th></th>
-          {DESC_RANKS.map(r => (
+          {DESC_RANKS.map((r) => (
             <th
               key={r}
               style={{
@@ -57,9 +71,11 @@ export default function RangeHeatmap({
             </th>
             {DESC_RANKS.map((colRank, j) => {
               let label;
-              if (i === j) label = `${rowRank}${colRank}`;    // pocket pair
-              else if (j < i) label = `${rowRank}${colRank}o`; // offsuit
-              else label = `${rowRank}${colRank}s`;            // suited
+              if (i === j)
+                label = `${rowRank}${colRank}`; // pocket pair
+              else if (j < i)
+                label = `${rowRank}${colRank}o`; // offsuit
+              else label = `${rowRank}${colRank}s`; // suited
 
               const included = selected.has(label);
               const backgroundColor = included ? '#3b82f6' : '#e5e7eb';
@@ -95,7 +111,7 @@ export default function RangeHeatmap({
 }
 
 RangeHeatmap.propTypes = {
-  combos:    PropTypes.arrayOf(PropTypes.string),
-  selected:  PropTypes.instanceOf(Set).isRequired,
-  onToggle:  PropTypes.func.isRequired,
+  combos: PropTypes.arrayOf(PropTypes.string),
+  selected: PropTypes.instanceOf(Set).isRequired,
+  onToggle: PropTypes.func.isRequired,
 };

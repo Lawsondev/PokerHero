@@ -8,12 +8,16 @@ test.describe('Poker Hero App', () => {
   });
 
   test('home page loads and shows equity tool title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /Interactive Poker Equity Tool/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Interactive Poker Equity Tool/i })
+    ).toBeVisible();
   });
 
   test('can generate and display a random villain hand', async ({ page }) => {
     // click “Generate Random Villain Hand”
-    await page.getByRole('button', { name: /Generate Random Villain Hand/i }).click();
+    await page
+      .getByRole('button', { name: /Generate Random Villain Hand/i })
+      .click();
     // should populate the Opponent input
     const oppInput = page.getByLabel(/Opponent's Hand/i);
     await expect(oppInput).not.toHaveValue('');
@@ -21,7 +25,9 @@ test.describe('Poker Hero App', () => {
     await expect(page.locator('img[alt]').first()).toBeVisible();
   });
 
-  test('calculate equity button is disabled until valid inputs', async ({ page }) => {
+  test('calculate equity button is disabled until valid inputs', async ({
+    page,
+  }) => {
     const calc = page.getByRole('button', { name: /Calculate Equity/i });
     await expect(calc).toBeDisabled();
     // enter two valid hands

@@ -8,8 +8,7 @@ export function pickTwoRandomFromRange(range) {
   return [shuffled[0], shuffled[1]];
 }
 
-
-const SUITS = ['h','d','c','s'];
+const SUITS = ['h', 'd', 'c', 's'];
 
 /**
  * Given a combo string like 'AKs', 'QJo', or '77',
@@ -18,13 +17,13 @@ const SUITS = ['h','d','c','s'];
 export function dealCombo(combo) {
   const rank1 = combo[0];
   const rank2 = combo[1];
-  const type  = combo[2] || ''; // 's', 'o', or '' for pairs
+  const type = combo[2] || ''; // 's', 'o', or '' for pairs
 
   // Pick two distinct suits
   const pickTwo = () => {
     const copy = SUITS.slice();
-    const s1 = copy.splice(Math.floor(Math.random()*copy.length), 1)[0];
-    const s2 = copy[Math.floor(Math.random()*copy.length)];
+    const s1 = copy.splice(Math.floor(Math.random() * copy.length), 1)[0];
+    const s2 = copy[Math.floor(Math.random() * copy.length)];
     return [s1, s2];
   };
 
@@ -36,7 +35,7 @@ export function dealCombo(combo) {
 
   if (type === 's') {
     // suited: pick one suit, use for both
-    const s = SUITS[Math.floor(Math.random()*SUITS.length)];
+    const s = SUITS[Math.floor(Math.random() * SUITS.length)];
     return [`${rank1}${s}`, `${rank2}${s}`];
   }
 

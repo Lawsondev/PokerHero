@@ -9,15 +9,17 @@ test.describe('PokerHero App', () => {
     await expect(header).toHaveText('Interactive Poker Equity Tool');
   });
 
-  test('Calculate Equity button is disabled until inputs valid', async ({ page }) => {
+  test('Calculate Equity button is disabled until inputs valid', async ({
+    page,
+  }) => {
     await page.goto('/equity');
     // Locate the button
     const calcBtn = page.getByRole('button', { name: /Calculate Equity/i });
     await expect(calcBtn).toBeDisabled();
 
     // Fill valid hero & villain hands
-    await page.getByLabel('Hero\'s Hand').fill('Ah Kh');
-    await page.getByLabel('Opponent\'s Hand').fill('Qs Jh');
+    await page.getByLabel("Hero's Hand").fill('Ah Kh');
+    await page.getByLabel("Opponent's Hand").fill('Qs Jh');
     // Now button should enable
     await expect(calcBtn).toBeEnabled();
   });

@@ -8,11 +8,14 @@ import { rangesByPosition } from '../data/ranges';
 export default function RangeSettings() {
   const { full, ranges, createRange, updateRange, deleteRange } = useRanges();
 
-const allCombos = useMemo(() => {
+  const allCombos = useMemo(() => {
     const u = new Set(Object.values(full).flat());
     return Array.from(u);
   }, [full]);
-console.log('Loaded full defaults:', Object.entries(full).map(([k, v]) => [k, v?.length]));
+  console.log(
+    'Loaded full defaults:',
+    Object.entries(full).map(([k, v]) => [k, v?.length])
+  );
   // Build a list of all named ranges, with defaults first
   const rangeNames = useMemo(() => {
     const allNames = Object.keys(ranges);
@@ -32,7 +35,12 @@ console.log('Loaded full defaults:', Object.entries(full).map(([k, v]) => [k, v?
       setSelectedName(rangeNames[0]);
     }
   }, [rangeNames, selectedName]);
-console.log('Selected:', selectedName, '→ Set size:', ranges[selectedName]?.size || 0);
+  console.log(
+    'Selected:',
+    selectedName,
+    '→ Set size:',
+    ranges[selectedName]?.size || 0
+  );
   const currentSet = ranges[selectedName] || new Set();
   const count = currentSet.size;
 
@@ -49,11 +57,19 @@ console.log('Selected:', selectedName, '→ Set size:', ranges[selectedName]?.si
   };
 
   // Reset back to the default for this range
-const handleReset = () => {
-  const defaults = Array.isArray(full[selectedName]) ? full[selectedName] : [];
-  console.log('Resetting to default for', selectedName, '→', defaults.length, 'combos');
-  updateRange(selectedName, new Set(defaults));
-};
+  const handleReset = () => {
+    const defaults = Array.isArray(full[selectedName])
+      ? full[selectedName]
+      : [];
+    console.log(
+      'Resetting to default for',
+      selectedName,
+      '→',
+      defaults.length,
+      'combos'
+    );
+    updateRange(selectedName, new Set(defaults));
+  };
 
   // Create a new custom range
   const handleCreate = () => {
@@ -83,8 +99,9 @@ const handleReset = () => {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Range Settings</h1>
-	  <p className="mb-6 text-gray-700 leading-relaxed">
-        This page is where you set your ranges for each position. These tables are used throughout the app.
+      <p className="mb-6 text-gray-700 leading-relaxed">
+        This page is where you set your ranges for each position. These tables
+        are used throughout the app.
       </p>
 
       {/* Range selector + actions */}

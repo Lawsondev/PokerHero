@@ -1,6 +1,20 @@
 // src/utils/rangeParser.js
 
-export const RANKS = ['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
+export const RANKS = [
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  'T',
+  'J',
+  'Q',
+  'K',
+  'A',
+];
 
 export function expandShorthand(shorthand) {
   const isPlus = shorthand.endsWith('+');
@@ -11,7 +25,7 @@ export function expandShorthand(shorthand) {
     const idx = RANKS.indexOf(core[0]);
     if (idx === -1) return [];
     const end = isPlus ? RANKS.length - 1 : idx;
-    return RANKS.slice(idx, end + 1).map(r => `${r}${r}`);
+    return RANKS.slice(idx, end + 1).map((r) => `${r}${r}`);
   }
 
   // Suited / offsuit
@@ -21,7 +35,7 @@ export function expandShorthand(shorthand) {
     const i2 = RANKS.indexOf(r2);
     if (i1 === -1 || i2 === -1) return [];
     const end = isPlus ? i1 - 1 : i2;
-    return RANKS.slice(i2, end + 1).map(r => `${r1}${r}${suffix}`);
+    return RANKS.slice(i2, end + 1).map((r) => `${r1}${r}${suffix}`);
   }
 
   return [];
@@ -40,9 +54,7 @@ export function expandAllRanges(rangesByPosition) {
       expanded[pos] = entry.flatMap(expandShorthand);
     } else {
       // multiple categories (e.g., RFI, 3B, etc.)
-      const allCombos = Object.values(entry)
-        .flat()
-        .flatMap(expandShorthand);
+      const allCombos = Object.values(entry).flat().flatMap(expandShorthand);
 
       expanded[pos] = allCombos;
     }

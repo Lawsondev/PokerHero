@@ -8,7 +8,9 @@ test.describe('Equity Calculator (root "/")', () => {
   });
 
   test('has the correct page title', async ({ page }) => {
-    await expect(page.locator('h1')).toHaveText('Interactive Poker Equity Tool');
+    await expect(page.locator('h1')).toHaveText(
+      'Interactive Poker Equity Tool'
+    );
   });
 
   test('can calculate a simple equity', async ({ page }) => {
@@ -18,7 +20,7 @@ test.describe('Equity Calculator (root "/")', () => {
     // board empty is valid
     await page.click('button:has-text("Calculate Equity")');
     // wait for result to appear
-    const equityText = await page.locator('text=Hero\'s Equity');
+    const equityText = await page.locator("text=Hero's Equity");
     await expect(equityText).toContainText('%');
   });
 });

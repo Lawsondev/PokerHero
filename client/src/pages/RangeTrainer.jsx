@@ -10,7 +10,7 @@ export default function RangeTrainer() {
   const { full: fullRanges, ranges } = useRanges();
 
   const ALL_COMBOS = useMemo(() => {
-    const R = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+    const R = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
     const combos = [];
     for (let i = 0; i < R.length; i++) {
       for (let j = 0; j < R.length; j++) {
@@ -55,7 +55,9 @@ export default function RangeTrainer() {
     const first = generateScenario();
     setScenario(first);
     setPlayers(first.players);
-    setStackedSeats(first.activePositions.filter(p => p !== first.heroPosition));
+    setStackedSeats(
+      first.activePositions.filter((p) => p !== first.heroPosition)
+    );
   }, []);
 
   const handleNextHand = () => {
@@ -64,7 +66,9 @@ export default function RangeTrainer() {
     const next = generateScenario();
     setScenario(next);
     setPlayers(next.players);
-    setStackedSeats(next.activePositions.filter(p => p !== next.heroPosition));
+    setStackedSeats(
+      next.activePositions.filter((p) => p !== next.heroPosition)
+    );
   };
 
   const handleAnswer = (action) => {
@@ -76,7 +80,7 @@ export default function RangeTrainer() {
         : `❌ Wrong — correct is ${scenario.correctResponse}`
     );
     if (action === 'call' || action === 'raise') {
-      setStackedSeats(prev =>
+      setStackedSeats((prev) =>
         prev.includes(scenario.heroPosition)
           ? prev
           : [...prev, scenario.heroPosition]
@@ -86,14 +90,16 @@ export default function RangeTrainer() {
   };
 
   const heroSet = scenario
-    ? ranges[scenario.heroPosition] || new Set(fullRanges[scenario.heroPosition])
+    ? ranges[scenario.heroPosition] ||
+      new Set(fullRanges[scenario.heroPosition])
     : new Set();
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Range Memorizer Trainer</h1>
-	  <p className="mb-6 text-gray-700 leading-relaxed">
-        Train your memory by deciding between Folding, Calling, and Raising. The answers are pulled from the range tables set in the Range Settings Tab.
+      <p className="mb-6 text-gray-700 leading-relaxed">
+        Train your memory by deciding between Folding, Calling, and Raising. The
+        answers are pulled from the range tables set in the Range Settings Tab.
       </p>
 
       {/* Controls */}
@@ -114,18 +120,20 @@ export default function RangeTrainer() {
           <select
             className="mt-1 p-2 border rounded"
             value={players}
-            onChange={e => setPlayers(Number(e.target.value))}
-            disabled={answered} 
+            onChange={(e) => setPlayers(Number(e.target.value))}
+            disabled={answered}
           >
-            {[2,3,4,5,6].map(n => (
-              <option key={n} value={n}>{n}</option>
+            {[2, 3, 4, 5, 6].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>
         <button
           className="ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           onClick={handleNextHand}
-          disabled={false} 
+          disabled={false}
         >
           Next Hand
         </button>
@@ -143,7 +151,7 @@ export default function RangeTrainer() {
 
       {/* Actions */}
       <div className="mt-6 flex gap-4">
-        {['fold','call','raise'].map(action => (
+        {['fold', 'call', 'raise'].map((action) => (
           <button
             key={action}
             className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
@@ -156,9 +164,7 @@ export default function RangeTrainer() {
       </div>
 
       {/* Feedback */}
-      {feedback && (
-        <div className="mt-4 text-lg font-medium">{feedback}</div>
-      )}
+      {feedback && <div className="mt-4 text-lg font-medium">{feedback}</div>}
 
       {/* Debug info 
       {scenario && (
@@ -184,7 +190,6 @@ export default function RangeTrainer() {
           />
         </div>
       )}
-		
     </div>
   );
 }

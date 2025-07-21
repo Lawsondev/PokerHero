@@ -12,39 +12,21 @@ export const rangesByPosition = {
   // Early (UTG): ~10% RFI
   UTG: {
     RFI: [
-      '77+',    // 77,88,99,TT,JJ,QQ,KK,AA
-      'ATs+',   // ATs,AJs,AQs,AKs
-      'AQo+',   // ATo,AJo,AQo,AKo
-      'KQs'     // King-Queen suited
+      '77+', // 77,88,99,TT,JJ,QQ,KK,AA
+      'ATs+', // ATs,AJs,AQs,AKs
+      'AQo+', // ATo,AJo,AQo,AKo
+      'KQs', // King-Queen suited
     ],
   },
 
   // Middle (MP = UTG+2): ~15.7% RFI
   MP: {
-    RFI: [
-      '66+',
-      'A9s+',
-      'KJs+',
-      'QTs+',
-      'JTs',
-      'ATo+',
-      'KQo'
-    ],
+    RFI: ['66+', 'A9s+', 'KJs+', 'QTs+', 'JTs', 'ATo+', 'KQo'],
   },
 
   // Cutoff: ~27% RFI
   CO: {
-    RFI: [
-      '55+',
-      'A5s+',
-      'K9s+',
-      'QTs+',
-      'JTs+',
-      'T9s+',
-      'ATo+',
-      'KJo',
-      'QJo'
-    ],
+    RFI: ['55+', 'A5s+', 'K9s+', 'QTs+', 'JTs+', 'T9s+', 'ATo+', 'KJo', 'QJo'],
   },
 
   // Button: ~51% RFI
@@ -65,7 +47,7 @@ export const rangesByPosition = {
       '87s+',
       '76s+',
       '65s+',
-      '54s+'
+      '54s+',
     ],
   },
 
@@ -86,7 +68,7 @@ export const rangesByPosition = {
       'A2o+',
       'K9o+',
       'QTo+',
-      'JTo'
+      'JTo',
     ],
   },
 
@@ -107,7 +89,7 @@ export const rangesByPosition = {
       'A2o+',
       'K9o+',
       'QTo+',
-      'JTo'
+      'JTo',
     ],
   },
 };
