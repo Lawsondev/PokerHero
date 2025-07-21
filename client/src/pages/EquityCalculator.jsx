@@ -26,7 +26,7 @@ export default function EquityCalculator() {
   const [isValid, setIsValid]       = useState(false);
   const [equity, setEquity]         = useState(null);
   const [iterations, setIterations] = useState(1000);
-
+  const [showExplanation, setShowExplanation] = useState(false);
   // ——— Validation ———
   const validateInputs = (h,o,b) => {
     const rx = /^[2-9TJQKA][cdhs]$/i;
@@ -54,6 +54,10 @@ export default function EquityCalculator() {
 
   // ——— Equity calculation ———
   const handleCalculate = () => {
+	  if (iterations <= 0) {
+    setEquity(null);
+    return;
+  }
     const fmtCard = cs =>
       cs.trim().length===2
         ? cs[0].toUpperCase()+cs[1].toLowerCase()
@@ -73,10 +77,14 @@ export default function EquityCalculator() {
   };
 
   useEffect(() => {
-    if (isValid) handleCalculate();
-  }, [heroHand, oppHand, board, isValid, iterations]);
+  if (isValid && iterations > 0) {
+    handleCalculate();
+  } else {
+    setEquity(null);
+  }
+}, [heroHand, oppHand, board, isValid, iterations]);
 
-  // ——— Deck builder for board draws ———
+  // ——— Deck builder & board draws ———
   const buildDeck = (exclude=[]) => {
     const ranks = ['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
     const suits = ['h','d','c','s'], deck = [];
@@ -109,7 +117,7 @@ export default function EquityCalculator() {
     validateInputs(heroHand, oppHand, nb);
   };
 
-  // ——— Random hero hand (no overlap) ———
+  // ——— Random hero & villain hands ———
   const genHeroHand = () => {
     const pool = Array.from(ranges[heroRangeKey]);
     const exclude = new Set([ ...oppHand.split(' '), ...board.split(' ') ].filter(Boolean));
@@ -122,8 +130,6 @@ export default function EquityCalculator() {
     setHeroHand(hand);
     validateInputs(hand, oppHand, board);
   };
-
-  // ——— Random villain hand (no overlap) ———
   const genVillainHand = () => {
     const pool = Array.from(ranges[villainPosition]);
     const exclude = new Set([ ...heroHand.split(' '), ...board.split(' ') ].filter(Boolean));
@@ -139,221 +145,235 @@ export default function EquityCalculator() {
 
   return (
     <div className="p-8 max-w-screen-lg mx-auto font-sans text-gray-800">
-      <h1 className="text-3xl font-bold mb-6">Interactive Poker Equity Tool</h1>
+
+      {/* Title & Overview */}
+      <h1 className="text-3xl font-bold mb-4">Interactive Poker Equity Tool</h1>
       <p className="mb-6 text-gray-700 leading-relaxed">
         This tool lets you calculate the equity of one hand versus another in real-time.
         Enter hole cards for both players and optionally fill out the board; the tool will
         simulate many outcomes and return a percentage equity.
       </p>
 
-      {/* Toggle Range Heatmaps */}
+      {/* Step 1: Choose Your Ranges */}
       <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Step 1: Choose Your Ranges</h2>
+        <p className="mb-2 text-gray-600">
+          Select the hero’s opening range and each player’s seat.
+        </p>
         <button
           className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
           onClick={() => setShowHeatmaps(!showHeatmaps)}
         >
           {showHeatmaps ? 'Hide Ranges' : 'Show Ranges'}
         </button>
-      </div>
 
-      {/* Hero Range Preset */}
-      <label className="block mb-2 font-medium">
-        Hero Range Preset:
-        <select
-          className="ml-2 p-2 border rounded"
-          value={heroRangeKey}
-          onChange={e => setHeroRangeKey(e.target.value)}
-        >
-          {rangeNames.map(name => (
-            <option key={name} value={name}>{name}</option>
-          ))}
-        </select>
-      </label>
-
-      {/* Position selectors */}
-      <div className="flex space-x-4 mb-6">
-        <div>
-          <label className="block font-semibold">Hero Position</label>
-          <select
-            className="mt-1 p-2 border rounded"
-            value={heroPosition}
-            onChange={e => setHeroPosition(e.target.value)}
-          >
-            {positionOptions.map(pos => (
-              <option key={pos} value={pos}>{pos}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block font-semibold">Villain Position</label>
-          <select
-            className="mt-1 p-2 border rounded"
-            value={villainPosition}
-            onChange={e => setVillainPosition(e.target.value)}
-          >
-            {positionOptions.map(pos => (
-              <option key={pos} value={pos}>{pos}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Range heatmaps */}
-      {showHeatmaps && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Hero Range</h2>
-            <RangeHeatmap
-              combos={full[heroRangeKey]}
-              selected={ranges[heroRangeKey]}
-              onToggle={combo => {
-                const next = new Set(ranges[heroRangeKey]);
-                next.has(combo) ? next.delete(combo) : next.add(combo);
-                updateRange(heroRangeKey, next);
-              }}
-            />
+        {/* moved heatmaps here under the button */}
+        {showHeatmaps && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-1">Hero Range</h3>
+              <RangeHeatmap
+                combos={full[heroRangeKey]}
+                selected={ranges[heroRangeKey]}
+                onToggle={combo => {
+                  const next = new Set(ranges[heroRangeKey]);
+                  next.has(combo) ? next.delete(combo) : next.add(combo);
+                  updateRange(heroRangeKey, next);
+                }}
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-1">Villain Range</h3>
+              <RangeHeatmap
+                combos={full[villainPosition]}
+                selected={ranges[villainPosition]}
+                onToggle={() => {}}
+              />
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Villain Range</h2>
-            <RangeHeatmap
-              combos={full[villainPosition]}
-              selected={ranges[villainPosition]}
-              onToggle={() => {}}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <button
-          className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-          onClick={genHeroHand}
-        >
-          Generate Random Hero Hand
-        </button>
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={genVillainHand}
-        >
-          Generate Random Villain Hand
-        </button>
-        <button
-          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-          onClick={dealRandomFlop}
-        >
-          Generate Flop
-        </button>
-        <button
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-          onClick={dealRandomTurn}
-        >
-          Deal Turn
-        </button>
-        <button
-          className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
-          onClick={dealRandomRiver}
-        >
-          Deal River
-        </button>
-      </div>
-
-      {/* Hand & board inputs */}
-      <div className="space-y-4 mb-6">
-        <div>
-          <label className="block font-semibold">Hero's Hand</label>
-          {heroHand && (
-            <div className="mt-2">
-              {heroHand.trim().split(/\s+/).map(card => (
-                <CardImage key={card} card={card} />
-              ))}
-            </div>
-          )}
-          <input
-            type="text"
-            className="mt-1 w-full p-2 border rounded"
-            placeholder="Ah Kh"
-            value={heroHand}
-            onChange={e => {
-              setHeroHand(e.target.value);
-              validateInputs(e.target.value, oppHand, board);
-            }}
-          />
-          {errors.heroHand && <p className="text-red-600 mt-1">{errors.heroHand}</p>}
-        </div>
-        <div>
-          <label className="block font-semibold">Opponent's Hand</label>
-          {oppHand && (
-            <div className="mt-2">
-              {oppHand.trim().split(/\s+/).map(card => (
-                <CardImage key={card} card={card} />
-              ))}
-            </div>
-          )}
-          <input
-            type="text"
-            className="mt-1 w-full p-2 border rounded"
-            placeholder="Qs Jh"
-            value={oppHand}
-            onChange={e => {
-              setOppHand(e.target.value);
-              validateInputs(heroHand, e.target.value, board);
-            }}
-          />
-          {errors.oppHand && <p className="text-red-600 mt-1">{errors.oppHand}</p>}
-        </div>
-        <div>
-          {board && (
-            <div className="mt-2">
-              <span className="font-semibold">Board:</span>{' '}
-              {board.trim().split(/\s+/).map(card => (
-                <CardImage key={card} card={card} />
-              ))}
-            </div>
-          )}
-          <label className="block font-semibold">Board Cards</label>
-          <input
-            type="text"
-            className="mt-1 w-full p-2 border rounded"
-            placeholder="As Kd 2c"
-            value={board}
-            onChange={e => {
-              setBoard(e.target.value);
-              validateInputs(heroHand, oppHand, e.target.value);
-            }}
-          />
-          {(errors.board || errors.duplicates) && (
-            <p className="text-red-600 mt-1">{errors.board || errors.duplicates}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Equity result */}
-      <div className="space-y-4 mb-6">
-        <div>
-          <label className="block font-semibold">Iterations</label>
-          <input
-            type="number"
-            className="mt-1 w-full p-2 border rounded"
-            min={100}
-            step={100}
-            value={iterations}
-            onChange={e => setIterations(Number(e.target.value))}
-          />
-        </div>
-        <button
-          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-          onClick={handleCalculate}
-          disabled={!isValid}
-        >
-          Calculate Equity
-        </button>
-        {equity !== null && (
-          <p className="mt-4 text-xl">
-            Hero's Equity: <strong>{equity}</strong>
-          </p>
         )}
       </div>
+
+      {/* Step 2: Deal Hole Cards */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Step 2: Deal Hole Cards</h2>
+        <p className="mb-2 text-gray-600">
+          Either type in each player’s two cards, or click “Generate Random Hand.”
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <button
+            className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+            onClick={genHeroHand}
+          >
+            Generate Random Hero Hand
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={genVillainHand}
+          >
+            Generate Random Villain Hand
+          </button>
+        </div>
+      </div>
+
+      {/* Deal the Board */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">(Optional) Deal the Board</h2>
+        <p className="mb-2 text-gray-600">
+          Simulate the flop, turn, and river, or enter your own board cards.
+        </p>
+        <div className="flex flex-wrap gap-4 mb-4">
+          <button
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+            onClick={dealRandomFlop}
+          >
+            Generate Flop
+          </button>
+          <button
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            onClick={dealRandomTurn}
+          >
+            Deal Turn
+          </button>
+          <button
+            className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
+            onClick={dealRandomRiver}
+          >
+            Deal River
+          </button>
+        </div>
+
+        {/* Hole‐cards & Board Inputs */}
+        <div className="space-y-4">
+          {/* Hero’s Hand */}
+          <div>
+            <label htmlFor="hero-hand" className="block font-semibold">Hero’s Hand</label>
+            {heroHand && (
+              <div className="mt-2">
+                {heroHand.split(/\s+/).map(card => (
+                  <CardImage key={card} card={card} />
+                ))}
+              </div>
+            )}
+            <input
+              id="hero-hand"
+              type="text"
+              className="mt-1 w-full p-2 border rounded"
+              placeholder="Ah Kh"
+              value={heroHand}
+              onChange={e => {
+                setHeroHand(e.target.value);
+                validateInputs(e.target.value, oppHand, board);
+              }}
+            />
+            {errors.heroHand && <p className="text-red-600 mt-1">{errors.heroHand}</p>}
+          </div>
+
+          {/* Opponent’s Hand */}
+          <div>
+            <label htmlFor="opp-hand" className="block font-semibold">Opponent’s Hand</label>
+            {oppHand && (
+              <div className="mt-2">
+                {oppHand.split(/\s+/).map(card => (
+                  <CardImage key={card} card={card} />
+                ))}
+              </div>
+            )}
+            <input
+              id="opp-hand"
+              type="text"
+              className="mt-1 w-full p-2 border rounded"
+              placeholder="Qs Jh"
+              value={oppHand}
+              onChange={e => {
+                setOppHand(e.target.value);
+                validateInputs(heroHand, e.target.value, board);
+              }}
+            />
+            {errors.oppHand && <p className="text-red-600 mt-1">{errors.oppHand}</p>}
+          </div>
+
+          {/* Board Cards */}
+          <div>
+            <label htmlFor="board-cards" className="block font-semibold">Board Cards</label>
+            {board && (
+              <div className="mt-2">
+                {board.split(/\s+/).map(card => (
+                  <CardImage key={card} card={card} />
+                ))}
+              </div>
+            )}
+            <input
+              id="board-cards"
+              type="text"
+              className="mt-1 w-full p-2 border rounded"
+              placeholder="As Kd 2c"
+              value={board}
+              onChange={e => {
+                setBoard(e.target.value);
+                validateInputs(heroHand, oppHand, e.target.value);
+              }}
+            />
+            {(errors.board || errors.duplicates) && (
+              <p className="text-red-600 mt-1">{errors.board || errors.duplicates}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+     {/* Step 3: Calculate Equity */}
+<div className="mb-6">
+  <h2 className="text-xl font-semibold mb-2">Step 3: Calculate Equity</h2>
+  <p className="mb-2 text-gray-600">
+    Choose your simulations count and click “Calculate Equity.”
+  </p>
+  <div className="space-y-4">
+    <label htmlFor="iterations" className="block font-semibold">
+      # of simulations
+    </label>
+    <input
+      id="iterations"
+      type="number"
+      className="mt-1 w-full p-2 border rounded"
+      min={100}
+      step={100}
+      value={iterations}
+      onChange={e => setIterations(Number(e.target.value))}
+    />
+<button
+  onClick={handleCalculate}
+  disabled={!isValid || iterations <= 0}  // ← change here
+  title="Calculate the percentage of scenarios your hand wins"
+  className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+>
+  Calculate Equity
+</button>
+  </div>
+</div>
+
+      {/* Step 5: View Results */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Your Equity:</h2>
+        {equity !== null && (
+          <p className="text-xl">
+            Hero’s Equity: <strong>{equity}</strong>
+          </p>
+        )}
+		 {/* new “why does the percentage change?” link */}
+          <button
+            type="button"
+            className="mt-2 text-sm text-blue-600 underline"
+            onClick={() => setShowExplanation(!showExplanation)}
+          >
+            why does the percentage change?
+          </button>
+          {showExplanation && (
+            <p className="mt-2 text-gray-600 text-sm">
+              The percentage is based on a real time calculation of total hands won vs. total hands lost, during the simulations set above. More simulations equals more accuracy.
+            </p>
+          )}
+      </div>
+
     </div>
   );
 }
