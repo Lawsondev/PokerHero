@@ -101,5 +101,8 @@ export function calculateEquity(
 
   const heroEquity = ((heroWins + ties / 2) / iterations) * 100;
 
-  return heroEquity.toFixed(2) + '%';
+      // new—return a pure Number (rounded to 2 decimals)
+  return parseFloat(heroEquity.toFixed(2));
+
+
 }

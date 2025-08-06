@@ -3,6 +3,7 @@ import React from 'react';
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
 import EquityCalculator from './pages/EquityCalculator';
 import RangeTrainer from './pages/RangeTrainer';
+import AICoaching from './pages/AICoaching';
 import RangeSettings from './pages/RangeSettings';
 import { RangeProvider } from './contexts/RangeContext';
 export default function App() {
@@ -34,9 +35,21 @@ export default function App() {
                     : 'inline-block py-4 text-gray-600 hover:text-blue-600'
                 }
               >
-                Range Trainer
+                Pre-Flop Range Trainer
               </NavLink>
             </li>
+			<li>
+                <NavLink
+                  to="/ai-coaching"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'inline-block py-4 text-blue-600 border-b-2 border-blue-600'
+                      : 'inline-block py-4 text-gray-600 hover:text-blue-600'
+                  }
+                >
+                  AI Coaching
+                </NavLink>
+              </li>
             <li>
               <NavLink
                 to="/settings"
@@ -46,6 +59,7 @@ export default function App() {
                     : 'inline-block py-4 text-gray-600 hover:text-blue-600'
                 }
               >
+			  
                 Range Settings
               </NavLink>
             </li>
@@ -59,6 +73,7 @@ export default function App() {
 		  <Route index element={<EquityCalculator />} />
           <Route path="/equity" element={<EquityCalculator />} />
           <Route path="/trainer" element={<RangeTrainer />} />
+		  <Route path="/ai-coaching" element={<AICoaching />} />
           <Route path="/settings" element={<RangeSettings />} />
 		  
         </Routes>
