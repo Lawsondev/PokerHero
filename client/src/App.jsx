@@ -8,11 +8,16 @@ import RangeSettings from './pages/RangeSettings';
 import { RangeProvider } from './contexts/RangeContext';
 export default function App() {
   return (
-    <div className="min-h-screen font-sans bg-[#bef7db] text-gray-800">
+  <div
+    className="min-h-screen bg-repeat"
+    style={{ backgroundImage: "url('/casino.jpg')" }}
+  >
+    <div className="min-h-screen font-sans text-gray-800 bg-white max-w-screen-lg mx-auto shadow-lg">
       {/* === Navigation Bar === */}
       <nav className="bg-white shadow-md">
         <div className="max-w-screen-lg mx-auto px-4">
           <ul className="flex space-x-4">
+            {/*
             <li>
               <NavLink
                 to="/equity"
@@ -24,6 +29,20 @@ export default function App() {
                 }
               >
                 Equity Calculator
+              </NavLink>
+            </li>
+            */}
+
+            <li>
+              <NavLink
+                to="/ai-coaching"
+                className={({ isActive }) =>
+                  isActive
+                    ? 'inline-block py-4 text-blue-600 border-b-2 border-blue-600'
+                    : 'inline-block py-4 text-gray-600 hover:text-blue-600'
+                }
+              >
+                AI Coaching
               </NavLink>
             </li>
             <li>
@@ -38,18 +57,6 @@ export default function App() {
                 Pre-Flop Range Trainer
               </NavLink>
             </li>
-			<li>
-                <NavLink
-                  to="/ai-coaching"
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'inline-block py-4 text-blue-600 border-b-2 border-blue-600'
-                      : 'inline-block py-4 text-gray-600 hover:text-blue-600'
-                  }
-                >
-                  AI Coaching
-                </NavLink>
-              </li>
             <li>
               <NavLink
                 to="/settings"
@@ -59,7 +66,6 @@ export default function App() {
                     : 'inline-block py-4 text-gray-600 hover:text-blue-600'
                 }
               >
-			  
                 Range Settings
               </NavLink>
             </li>
@@ -68,16 +74,17 @@ export default function App() {
       </nav>
 
       {/* === Page Content === */}
-      <main className="max-w-screen-lg mx-auto px-4 py-6">
+      <main className="px-4 py-6">
         <Routes>
-		  <Route index element={<EquityCalculator />} />
-          <Route path="/equity" element={<EquityCalculator />} />
+          <Route index element={<AICoaching />} />
+          {/* <Route path="/equity" element={<EquityCalculator />} /> */}
           <Route path="/trainer" element={<RangeTrainer />} />
-		  <Route path="/ai-coaching" element={<AICoaching />} />
+          <Route path="/ai-coaching" element={<AICoaching />} />
           <Route path="/settings" element={<RangeSettings />} />
-		  
         </Routes>
       </main>
     </div>
-  );
+  </div>
+);
+
 }
