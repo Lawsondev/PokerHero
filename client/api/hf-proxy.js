@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     // If client sent router-style chat, map it to a prompt + model
     if (endpoint.startsWith('v1/chat/completions')) {
       // Default public instruct model (change if gated for your account)
-      model = 'mistralai/Mistral-7B-Instruct-v0.3'; // alternatives: 'HuggingFaceH4/zephyr-7b-beta', 'tiiuae/falcon-7b-instruct'
+      model = 'HuggingFaceH4/zephyr-7b-beta'; // alternatives: 'HuggingFaceH4/zephyr-7b-beta', 'tiiuae/falcon-7b-instruct'
       url = `https://api-inference.huggingface.co/models/${model}`;
 
       const messages = (payload && payload.messages) || [];
