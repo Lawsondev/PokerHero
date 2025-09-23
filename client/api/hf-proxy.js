@@ -6,14 +6,13 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Accept common env names; long-term keep only HF_TOKEN in Vercel
+    // Accept common env names during transition; long term keep only HF_TOKEN in Vercel
     const HF_TOKEN =
       process.env.HF_TOKEN ||
       process.env.VITE_HF_API_TOKEN ||
       process.env.REACT_APP_HF_API_TOKEN;
 
     if (!HF_TOKEN) {
-      // Debug which keys exist at runtime (no secrets exposed)
       const keys = Object.keys(process?.env || {});
       const seen = keys.filter(k =>
         ['HF_TOKEN', 'VITE_HF_API_TOKEN', 'REACT_APP_HF_API_TOKEN'].includes(k)
@@ -22,26 +21,28 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Parse JSON body (Node/Vercel functions may not pre-parse)
+    // Parse JSON body (Vercel Node functions may not pre-parse)
     const body = await new Promise((resolve, reject) => {
       if (req.body && typeof req.body === 'object') return resolve(req.body);
       let data = '';
       req.on('data', c => (data += c));
-      req.on('end', () => {
-        try { resolve(data ? JSON.parse(data) : {}); }
-        catch { resolve({}); }
-      });
+      req.on('end', () => { try { resolve(data ? JSON.parse(data) : {}); } catch { resolve({}); } });
       req.on('error', reject);
     });
 
-    const { endpoint, payload } = body || {};
+    const { endpoint, payload, mode = 'router' } = body || {};
     if (!endpoint) {
       res.status(400).json({ error: 'Missing "endpoint"' });
       return;
     }
 
-    // Use HF router (OpenAI-compatible paths like v1/chat/completions)
-    const r = await fetch(`https://router.huggingface.co/${endpoint}`, {
+    // Choose base: router (OpenAI-compatible) or classic Inference API
+    const base =
+      mode === 'inference'
+        ? 'https://api-inference.huggingface.co/'
+        : 'https://router.huggingface.co/';
+
+    const r = await fetch(base + endpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${HF_TOKEN}`,
