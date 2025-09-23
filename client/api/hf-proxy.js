@@ -6,29 +6,41 @@ export default async function handler(req, res) {
       return;
     }
 
-    const HF_TOKEN = process.env.HF_TOKEN;
+    // Accept common env names; long-term keep only HF_TOKEN in Vercel
+    const HF_TOKEN =
+      process.env.HF_TOKEN ||
+      process.env.VITE_HF_API_TOKEN ||
+      process.env.REACT_APP_HF_API_TOKEN;
+
     if (!HF_TOKEN) {
-      res.status(500).json({ error: 'HF_TOKEN not set in environment' });
+      // Debug which keys exist at runtime (no secrets exposed)
+      const keys = Object.keys(process?.env || {});
+      const seen = keys.filter(k =>
+        ['HF_TOKEN', 'VITE_HF_API_TOKEN', 'REACT_APP_HF_API_TOKEN'].includes(k)
+      );
+      res.status(500).json({ error: 'HF_TOKEN not set in environment', seen });
       return;
     }
 
-    // Parse body safely
+    // Parse JSON body (Node/Vercel functions may not pre-parse)
     const body = await new Promise((resolve, reject) => {
       if (req.body && typeof req.body === 'object') return resolve(req.body);
       let data = '';
       req.on('data', c => (data += c));
       req.on('end', () => {
-        try { resolve(data ? JSON.parse(data) : {}); } catch { resolve({}); }
+        try { resolve(data ? JSON.parse(data) : {}); }
+        catch { resolve({}); }
       });
       req.on('error', reject);
     });
 
-    const { endpoint, payload } = body;
+    const { endpoint, payload } = body || {};
     if (!endpoint) {
       res.status(400).json({ error: 'Missing "endpoint"' });
       return;
     }
 
+    // Use HF router (OpenAI-compatible paths like v1/chat/completions)
     const r = await fetch(`https://router.huggingface.co/${endpoint}`, {
       method: 'POST',
       headers: {
