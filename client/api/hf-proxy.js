@@ -2,11 +2,11 @@
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') {
-      res.status(405).json({ error: 'Method not allowed' });
-      return;
+      res.setHeader('x-proxy-version', 'v4');        // <-- bump when redeploying
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Accept common env names during migration; long term, keep only HF_TOKEN
+    // Accept common names during migration; long term keep only HF_TOKEN
     const HF_TOKEN =
       process.env.HF_TOKEN ||
       process.env.VITE_HF_API_TOKEN ||
@@ -17,8 +17,9 @@ export default async function handler(req, res) {
       const seen = keys.filter(k =>
         ['HF_TOKEN', 'VITE_HF_API_TOKEN', 'REACT_APP_HF_API_TOKEN'].includes(k)
       );
-      res.status(500).json({ error: 'HF_TOKEN not set in environment', seen });
-      return;
+      res.setHeader('x-proxy-version', 'v4');
+      res.setHeader('x-proxy-target', 'none');
+      return res.status(500).json({ error: 'HF_TOKEN not set in environment', seen });
     }
 
     // Parse JSON body safely
@@ -32,28 +33,24 @@ export default async function handler(req, res) {
 
     let { endpoint, payload } = body || {};
     if (!endpoint) {
-      res.status(400).json({ error: 'Missing "endpoint"' });
-      return;
+      res.setHeader('x-proxy-version', 'v4');
+      res.setHeader('x-proxy-target', 'none');
+      return res.status(400).json({ error: 'Missing "endpoint"' });
     }
 
-    // Always target the Inference API
-    let url = '';
-    let outPayload = payload || {};
-    let model = null;
+    // --- ALWAYS use the Inference API ---
+    // Map router-style chat payloads -> inference request
+    let url, outPayload;
 
-    // If client sent router-style chat, map it to a prompt + model
     if (endpoint.startsWith('v1/chat/completions')) {
-      // Default public instruct model (change if gated for your account)
-      model = 'HuggingFaceH4/zephyr-7b-beta'; // alternatives: 'HuggingFaceH4/zephyr-7b-beta', 'tiiuae/falcon-7b-instruct'
+      const model = 'mistralai/Mistral-7B-Instruct-v0.3'; // swap if gated for your account
       url = `https://api-inference.huggingface.co/models/${model}`;
 
       const messages = (payload && payload.messages) || [];
       const sys = messages.find(m => m.role === 'system')?.content || '';
       const chat = messages.filter(m => m.role !== 'system');
       let prompt = sys ? `System: ${sys}\n\n` : '';
-      for (const m of chat) {
-        prompt += `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}\n`;
-      }
+      for (const m of chat) prompt += `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}\n`;
       prompt += 'Assistant:';
 
       outPayload = {
@@ -64,12 +61,12 @@ export default async function handler(req, res) {
         }
       };
     } else if (endpoint.startsWith('models/')) {
-      // Already an inference endpoint; just forward
       url = `https://api-inference.huggingface.co/${endpoint}`;
+      outPayload = payload || {};
     } else {
-      // Fallback: treat as inference models/<endpoint>
-      model = endpoint.replace(/^\/+/, '');
-      url = `https://api-inference.huggingface.co/models/${model}`;
+      // Fallback: treat endpoint as a model id
+      url = `https://api-inference.huggingface.co/models/${endpoint.replace(/^\/+/, '')}`;
+      outPayload = payload || {};
     }
 
     const r = await fetch(url, {
@@ -82,10 +79,12 @@ export default async function handler(req, res) {
     });
 
     const text = await r.text();
-    // Helpful response header so you can confirm the path used
+    res.setHeader('x-proxy-version', 'v4');
     res.setHeader('x-proxy-target', 'inference');
-    res.status(r.status).send(text);
+    return res.status(r.status).send(text);
   } catch (e) {
-    res.status(500).json({ error: String(e) });
+    res.setHeader('x-proxy-version', 'v4');
+    res.setHeader('x-proxy-target', 'error');
+    return res.status(500).json({ error: String(e) });
   }
 }
