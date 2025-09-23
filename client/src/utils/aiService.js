@@ -15,23 +15,18 @@ function cleanMarkdown(text) {
     .trim();
 }
 
-// Render chat messages to a single prompt for Inference API text-generation
+// very simple chat -> text prompt for Inference API
 function renderPrompt(messages) {
-  // Simple chat-style prompt; adjust to your preferred template
   const sys = messages.find(m => m.role === 'system')?.content || '';
   const rest = messages.filter(m => m.role !== 'system');
   let out = sys ? `System: ${sys}\n\n` : '';
-  for (const m of rest) {
-    out += `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}\n`;
-  }
+  for (const m of rest) out += `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}\n`;
   out += 'Assistant:';
   return out;
 }
 
 /**
- * Sends a chat prompt through our proxy. Tries Router first; on 403 falls back to the free Inference API.
- * @param {string} prompt
- * @param {{sender: string, message: string}[]} logs
+ * Send to Router first; if 403/404 or any non-2xx, hard-fallback to Inference API.
  */
 export async function sendToAI(prompt, logs = []) {
   const messages = [{
@@ -41,35 +36,35 @@ export async function sendToAI(prompt, logs = []) {
   }];
 
   for (const log of logs) {
-    messages.push({
-      role: log.sender === 'ai' ? 'assistant' : 'user',
-      content: log.message
-    });
+    messages.push({ role: log.sender === 'ai' ? 'assistant' : 'user', content: log.message });
   }
   messages.push({ role: 'user', content: prompt });
 
-  // 1) Try HF Router (OpenAI-compatible)
-  const routerBody = {
-    model: 'openai/gpt-oss-20b:fireworks-ai',
-    messages,
-    temperature: 0.7
+  // ---- 1) Try Router (OpenAI-compatible)
+  const routerReq = {
+    mode: 'router',
+    endpoint: 'v1/chat/completions',
+    payload: {
+      model: 'openai/gpt-oss-20b:fireworks-ai',
+      messages,
+      temperature: 0.7
+    }
   };
 
   let res = await fetch('/api/hf-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      mode: 'router',
-      endpoint: 'v1/chat/completions',
-      payload: routerBody
-    })
+    body: JSON.stringify(routerReq)
   });
 
-  // 403 => no permission for Inference Providers; fallback to Inference API
-  if (res.status === 403) {
-    // 2) Classic Inference API (choose a strong, commonly available chat/instruct model)
-    // If this model is gated for you, pick another public instruct model you have access to.
-    const model = 'HuggingFaceH4/zephyr-7b-beta'; // good default; change if needed
+  // If router disallows your token (403), or the endpoint/model is unavailable (404),
+  // or any other non-2xx, fall back.
+  const shouldFallback = !res.ok && (res.status === 403 || res.status === 404 || res.status === 401);
+
+  if (shouldFallback) {
+    // ---- 2) Fallback to classic Inference API
+    // If you hit a gated model, switch to one you have access to.
+    const fallbackModel = 'mistralai/Mistral-7B-Instruct-v0.3'; // or 'HuggingFaceH4/zephyr-7b-beta'
     const promptText = renderPrompt(messages);
 
     res = await fetch('/api/hf-proxy', {
@@ -77,13 +72,10 @@ export async function sendToAI(prompt, logs = []) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mode: 'inference',
-        endpoint: `models/${model}`,
+        endpoint: `models/${fallbackModel}`,
         payload: {
           inputs: promptText,
-          parameters: {
-            max_new_tokens: 256,
-            temperature: 0.7
-          }
+          parameters: { max_new_tokens: 256, temperature: 0.7 }
         }
       })
     });
@@ -94,25 +86,23 @@ export async function sendToAI(prompt, logs = []) {
     throw new Error(`HF proxy error ${res.status}: ${err || res.statusText}`);
   }
 
-  // Try to parse router JSON first; otherwise parse inference output
-  const txt = await res.text();
+  const bodyText = await res.text();
   let reply = '';
 
+  // Try Router JSON first; else parse Inference formats; else return raw text
   try {
-    const data = JSON.parse(txt);
-    // Router (OpenAI-style)
+    const data = JSON.parse(bodyText);
     if (data?.choices?.[0]?.message?.content) {
-      reply = data.choices[0].message.content.trim();
+      reply = data.choices[0].message.content.trim();             // Router
     } else if (Array.isArray(data) && data[0]?.generated_text) {
-      // Inference API returns an array of { generated_text }
-      reply = String(data[0].generated_text || '').trim();
+      reply = String(data[0].generated_text || '').trim();        // Inference (array)
     } else if (data?.generated_text) {
-      reply = String(data.generated_text).trim();
+      reply = String(data.generated_text).trim();                 // Inference (object)
     } else {
-      reply = txt.trim();
+      reply = bodyText.trim();
     }
   } catch {
-    reply = txt.trim();
+    reply = bodyText.trim();
   }
 
   return cleanMarkdown(reply);
