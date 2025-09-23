@@ -2,15 +2,23 @@
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') {
+      res.setHeader('x-or-proxy', 'v2');
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const OR_KEY = process.env.OPENROUTER_API_KEY;
+    const OR_KEY =
+      process.env.OPENROUTER_API_KEY ||
+      process.env.OR_API_KEY ||
+      process.env.OPENROUTER_KEY;
+
     if (!OR_KEY) {
-      return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in env' });
+      const seen = Object.keys(process.env || {}).filter(k =>
+        ['OPENROUTER_API_KEY', 'OR_API_KEY', 'OPENROUTER_KEY'].includes(k)
+      );
+      res.setHeader('x-or-proxy', 'v2');
+      return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in env', seen });
     }
 
-    // Parse JSON body safely
     const body = await new Promise((resolve, reject) => {
       if (req.body && typeof req.body === 'object') return resolve(req.body);
       let data = '';
@@ -21,6 +29,7 @@ export default async function handler(req, res) {
 
     const { model, messages, temperature = 0.7, max_tokens = 256 } = body || {};
     if (!model || !Array.isArray(messages)) {
+      res.setHeader('x-or-proxy', 'v2');
       return res.status(400).json({ error: 'model and messages required' });
     }
 
@@ -29,7 +38,6 @@ export default async function handler(req, res) {
       headers: {
         'Authorization': `Bearer ${OR_KEY}`,
         'Content-Type': 'application/json',
-        // Optional but recommended so your app shows in OpenRouter logs
         'HTTP-Referer': process.env.OPENROUTER_REFERRER || '',
         'X-Title': 'Poker Hero AI Coaching'
       },
@@ -37,8 +45,10 @@ export default async function handler(req, res) {
     });
 
     const text = await r.text();
-    res.status(r.status).send(text);
+    res.setHeader('x-or-proxy', 'v2');
+    return res.status(r.status).send(text);
   } catch (e) {
-    res.status(500).json({ error: String(e) });
+    res.setHeader('x-or-proxy', 'v2');
+    return res.status(500).json({ error: String(e) });
   }
 }

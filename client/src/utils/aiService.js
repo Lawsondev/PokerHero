@@ -27,8 +27,8 @@ export async function sendToAI(prompt, logs = []) {
   }
   messages.push({ role: 'user', content: prompt });
 
-  // Pick a budget-friendly, widely available model on OpenRouter
-  // Good defaults: "google/gemini-flash-1.5", "openai/gpt-4o-mini", "anthropic/claude-3-haiku"
+  // Free/cheap default on OpenRouter
+  // Alternatives: "anthropic/claude-3-haiku", "openai/gpt-4o-mini", "mistralai/mistral-nemo"
   const model = 'google/gemini-flash-1.5';
 
   const res = await fetch('/api/openrouter-proxy', {
