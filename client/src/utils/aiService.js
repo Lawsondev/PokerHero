@@ -1,5 +1,7 @@
 // client/src/utils/aiService.js
-
+import { COACH_MODEL } from '../config/ai.js';
+const API_BASE = process.env.REACT_APP_API_BASE || '';
+console.log('[aiService] API_BASE =', API_BASE);
 function cleanMarkdown(text) {
   return text
     .replace(/```[\s\S]*?```/g, '')
@@ -27,14 +29,13 @@ export async function sendToAI(prompt, logs = []) {
   }
   messages.push({ role: 'user', content: prompt });
 
-  // Free Groq model (fast, generous free tier)
-  const model = 'llama-3.1-8b-instant'; // can switch to 'llama-3.1-70b-versatile' later
+  const model = COACH_MODEL;
 
-  const res = await fetch('/api/groq-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 256 })
-  });
+  const res = await fetch(`${API_BASE}/api/groq-proxy`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 256 })
+});
 
   if (!res.ok) {
     const err = await res.text().catch(() => '');
