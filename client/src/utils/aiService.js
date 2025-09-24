@@ -27,11 +27,10 @@ export async function sendToAI(prompt, logs = []) {
   }
   messages.push({ role: 'user', content: prompt });
 
-  // Free/cheap default on OpenRouter
-  // Alternatives: "anthropic/claude-3-haiku", "openai/gpt-4o-mini", "mistralai/mistral-nemo"
-  const model = 'google/gemini-flash-1.5';
+  // Free Groq model (fast, generous free tier)
+  const model = 'llama-3.1-8b-instant'; // can switch to 'llama-3.1-70b-versatile' later
 
-  const res = await fetch('/api/openrouter-proxy', {
+  const res = await fetch('/api/groq-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 256 })
@@ -39,7 +38,7 @@ export async function sendToAI(prompt, logs = []) {
 
   if (!res.ok) {
     const err = await res.text().catch(() => '');
-    throw new Error(`OpenRouter proxy error ${res.status}: ${err || res.statusText}`);
+    throw new Error(`Groq proxy error ${res.status}: ${err || res.statusText}`);
   }
 
   const data = await res.json().catch(() => ({}));
