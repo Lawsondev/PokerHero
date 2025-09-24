@@ -32,19 +32,21 @@ export default function AICoaching() {
   const [betInput, setBetInput] = useState(2.5);
   const [villains, setVillains] = useState([]);
   const [handReview, setHandReview] = useState('');
+
   const activePositions = positions.filter(p => !bet.folded.has(p));
   const blindsOnly = ['SB', 'BB'];
   const stackedSeats = stage === 'pre-flop' ? blindsOnly : positions.filter(p => p !== position);
+
   // --- Action availability (BB free-check, no 'Check' when facing a bet, etc.)
   const EPS = 1e-6;
   const heroPutNow = bet?.putInRound?.[position] ?? 0;
   const currentBet = bet?.currentBet ?? 0;
   const toCallNow = Math.max(0, currentBet - heroPutNow);
-
   const canCheck = toCallNow <= EPS;   // no bet to match
   const canCall  = toCallNow > EPS;    // facing a bet/raise
   const raiseLabel = 'Raise';
-  // NEW: reveal next street and append cards to the board (flop → turn → river)
+
+  // Reveal next street and append cards (flop → turn → river)
   const revealNextStreet = () => {
     const { cards, stage: nextStage } = revealNextCard(hand, stage);
     if (cards && cards.length) {
@@ -54,7 +56,7 @@ export default function AICoaching() {
   };
 
   const startNewHand = () => {
-	setHandReview('');
+    setHandReview('');
     const heroPos = positions[Math.floor(Math.random() * positions.length)];
     const villainSeats = positions.filter(p => p !== heroPos);
     setPosition(heroPos);
@@ -123,7 +125,7 @@ export default function AICoaching() {
     return `${r1}h${r2}${suited ? 'h' : 'd'}`;
   };
 
-  // NEW: coaching prompt builder (used for showdown / folds)
+  // Coaching prompt builder (used for showdown / folds)
   const buildCoachingPrompt = (phase = 'showdown') => {
     const heroStack = stacks?.[position] ?? DEFAULT_STACK_BB;
     const potNow = bet?.pot ?? 0;
@@ -184,15 +186,14 @@ Keep it under ~150 words. Be specific to this hand. Avoid generic advice.`;
     let logs = [...chatLogs, { sender: 'user', message: `I choose to ${normalized}${suffix}` }];
 
     if (heroRes.handComplete) {
-  setStage('showdown');
-  setChatLogs(logs);          // keep normal action logs
-  setLoading(true);
-  const coach = await sendToAI(buildCoachingPrompt('fold'), logs);
-  setLoading(false);
-  setHandReview(coach);       // ⬅️ goes to Hand Review panel
-  return;
-
-}
+      setStage('showdown');
+      setChatLogs(logs);          // keep normal action logs
+      setLoading(true);
+      const coach = await sendToAI(buildCoachingPrompt('fold'), logs);
+      setLoading(false);
+      setHandReview(coach);       // goes to Hand Review panel
+      return;
+    }
 
     let curBet = heroRes.bet;
     let curStacks = heroRes.stacks;
@@ -221,12 +222,12 @@ Keep it under ~150 words. Be specific to this hand. Avoid generic advice.`;
         { sender: 'ai', message: 'All villains folded. You win the pot.' },
         { sender: 'ai', message: `Final Pot: ${curBet.pot.toFixed(1)}bb. Hand ends.` }
       ];
-      setChatLogs(endLogs);         // keep the “You win” + “Final Pot” messages
-setLoading(true);
-const coach = await sendToAI(buildCoachingPrompt('win-noflop'), endLogs);
-setLoading(false);
-setHandReview(coach);         // ⬅️ NOT to chat
-return;
+      setChatLogs(endLogs);
+      setLoading(true);
+      const coach = await sendToAI(buildCoachingPrompt('win-noflop'), endLogs);
+      setLoading(false);
+      setHandReview(coach);
+      return;
     }
 
     const allMatched =
@@ -237,12 +238,12 @@ return;
       const next = nextStreetName(curBet.street);
       if (next === 'showdown') {
         setStage('showdown');
-setChatLogs(logs);
-setLoading(true);
-const coach = await sendToAI(buildCoachingPrompt('showdown'), logs);
-setLoading(false);
-setHandReview(coach);         // ⬅️ NOT to chat
-return;
+        setChatLogs(logs);
+        setLoading(true);
+        const coach = await sendToAI(buildCoachingPrompt('showdown'), logs);
+        setLoading(false);
+        setHandReview(coach);
+        return;
       }
 
       const { cards: newCards, stage: nextStage } = revealNextCard(hand, stage);
@@ -293,15 +294,14 @@ return;
   return (
     <div className="p-4 space-y-6">
       <h1 className="text-2xl font-bold">AI Coaching</h1>
-      <div className="flex gap-8">
+
+      {/* Stack on mobile, split on large screens */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* LEFT: Table + controls */}
         <div className="flex-1">
-          <div className="relative w-full h-[600px] ">
-            {/* Pot is shown on the felt by TableDisplay; keep or remove this line as you prefer */}
-            {/* <div className="absolute top-2 left-1/2 -translate-x-1/2 text-white font-bold drop-shadow">
-              Pot: {bet.pot?.toFixed(1) ?? 0} bb
-            </div> */}
+          {/* Responsive table container (TableDisplay scales internally) */}
+          <div className="relative w-full max-w-[1000px] mx-auto">
             <TableDisplay
-              className="absolute inset-0"
               activePositions={activePositions}
               buttonPosition="BTN"
               heroPosition={position}
@@ -314,7 +314,8 @@ return;
             />
           </div>
 
-           <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {/* Controls */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             {stage !== 'showdown' && (
               <>
                 <div className="flex items-center gap-2">
@@ -326,9 +327,9 @@ return;
                     step="0.5"
                     value={betInput}
                     onChange={e => setBetInput(parseFloat(e.target.value))}
-                    className="w-48"
+                    className="w-40 sm:w-56"
                   />
-                  <span>{parseFloat(betInput).toFixed(1)} bb</span>
+                  <span className="min-w-[60px] text-center">{parseFloat(betInput).toFixed(1)} bb</span>
                 </div>
 
                 <button
@@ -364,20 +365,28 @@ return;
                 </button>
               </>
             )}
-            <button onClick={startNewHand} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Next Hand</button>
-			
+
+            <button
+              onClick={startNewHand}
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Next Hand
+            </button>
           </div>
-		  {handReview && (
-  <div className="mt-6 w-full max-w-3xl mx-auto">
-    <h2 className="text-lg font-semibold mb-2">Hand Review</h2>
-    <div className="bg-gray-50 border rounded p-3 text-sm whitespace-pre-wrap">
-      {handReview}
-    </div>
-  </div>
-)}
+
+          {/* Hand Review below controls */}
+          {handReview && (
+            <div className="mt-6 w-full max-w-3xl mx-auto">
+              <h2 className="text-lg font-semibold mb-2">Hand Review</h2>
+              <div className="bg-gray-50 border rounded p-3 text-sm whitespace-pre-wrap">
+                {handReview}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="w-1/3 border-l pl-4 flex flex-col relative">
+        {/* RIGHT: Chat — full width on mobile, 1/3 on large */}
+        <div className="lg:w-1/3 lg:border-l border-t lg:border-t-0 pt-4 lg:pt-0 lg:pl-4 flex flex-col">
           <div className="flex-1 overflow-y-auto">
             <Chatbot
               logs={chatLogs}
